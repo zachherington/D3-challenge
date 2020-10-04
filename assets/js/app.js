@@ -6,9 +6,9 @@ var svgHeight = 500;
 var margin = {
     top: 40,
     right: 70,
-    bottom: 70,
-    left: 40
-}
+    bottom: 40,
+    left: 70
+};
 
 /// Set chart area ///
 var chartWidth = svgWidth - margin.left - margin.right;
@@ -17,8 +17,8 @@ var chartHeight = svgHeight - margin.top - margin.bottom;
 /// Define attributes ///
 var svg = d3.select("#scatter")
     .append("svg")
-    .attr("width", svgWidth)
-    .attr("height", svgHeight);
+    .attr("width", chartWidth)
+    .attr("height", chartHeight);
 
 /// Append a group area, then set its margins ///
 var chartGroup = svg.append("g")
@@ -29,11 +29,11 @@ var chartGroup = svg.append("g")
 d3.csv("assets/data/data.csv").then(function (csvdata) { 
 
   // Console Log entire data set
-  console.log(csvdata);
+    console.log(csvdata);
 
   // Pick chart fields
   csvdata.forEach(function(data) {
-      data.obesity = +data.obesity;
+      data.healthcare = +data.healthcare;
       data.poverty = +data.poverty;
   });
 
@@ -45,7 +45,7 @@ d3.csv("assets/data/data.csv").then(function (csvdata) {
 
   var y_scale = d3.scaleLinear()
     .range([chartHeight, 0])
-    .domain([0, d3.max(csvdata, data => data.obesity)]);
+    .domain([0, d3.max(csvdata, data => data.healthcare)]);
 
   var bottomAxis = d3.axisBottom(x_scale);
   var leftAxis = d3.axisLeft(y_scale);
@@ -58,7 +58,7 @@ d3.csv("assets/data/data.csv").then(function (csvdata) {
       .attr("x", 0 - (chartHeight / 2))
       .attr("dy", "1em")
       .attr("class", "axisText")
-      .text("Obesity");
+      .text("Healthcare");
 
   chartGroup.append("text")
       .attr("transform", `translate(${chartWidth / 2}, ${chartHeight + margin.top - 10})`)
@@ -73,11 +73,7 @@ d3.csv("assets/data/data.csv").then(function (csvdata) {
   chartGroup.append("g").call(leftAxis);
 
 
-  // ********************************************************************************
-  // Step 8: Set up bubbles and append SVG path?
-  // ********************************************************************************
-
-  // Add dots
+  // Add markers
   var circlesGroup = chartGroup.selectAll("circle").data(csvdata).enter()
 
   circlesGroup.append('g')
@@ -85,27 +81,20 @@ d3.csv("assets/data/data.csv").then(function (csvdata) {
       .data(csvdata)
       .enter()
       .append("circle")
-      .attr("cx", function (d) { return xLinearScale(d.poverty); })
-      .attr("cy", function (d) { return yLinearScale(d.obesity); })
+      .attr("cx", cx => x_scale(cx.poverty))
+      .attr("cy", cy => y_scale(cy.healthcare))
       .attr("r", 13)
-      // .attr("text-anchor", "middle").text(function (d) { return (d.abbr); })
       .style("fill", "#5e4a9e")
-      .style("opacity", "0.7")
+      .style("opacity", "0.3")
+      .style("stroke", "lightblue")
 
   circlesGroup
       .append("text")
-      //We return the abbreviation to .text, which makes the text the abbreviation.
-      .text(function (d) {
-          return d.abbr;
-      })
+      .text(t => t.abbr)
+
       //Now place the text using our scale.
-      .attr("dx", function (d) {
-          return xLinearScale(d['poverty']);
-      })
-      .attr("dy", function (d) {
-          // When the size of the text is the radius, adding a third of the radius to the height pushes it into the middle of the circle.
-          return yLinearScale(d['obesity']) + 10 / 2.5;
-      })
+      .attr("dx",dx => x_scale(dx['poverty']))
+      .attr("dy", dy => y_scale(dy['healthcare']) + 4)
       .attr("font-size", 13)
       .attr("class", "stateText")
 })
